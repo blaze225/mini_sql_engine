@@ -1,0 +1,12 @@
+<begin_table>
+table1
+DateTime
+Fruit
+Nos
+<end_table>
+<begin_table>
+table2
+Num1
+Num2
+<end_table>
+
