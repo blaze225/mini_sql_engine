@@ -15,13 +15,13 @@ def printAllCols(tabs,tables,tableDataR):
 		for i in tableDataR[tab]:
 			print ' '.join(i)
 
-def printAllColsWithJoin(tabs,tables,tableDataR,col):
-	""" tabs- list of tables, col- joining column """
+def printAllColsWithJoinCommon(tabs,tables,tableDataR,col):
+	""" tabs- list of tables, col- common joining column """
 	data=[]
 	headerList=[]
 	pos1 = tables[tabs[0]].index(col)	# positions of col in both tables
 	pos2 = tables[tabs[1]].index(col)
-	for t in tabs:						# print headers with only col printed only once
+	for t in tabs:						# print headers with  col printed only once
 		for c in tables[t]:
 			headerList.append(c)
 	headerList.reverse()
@@ -29,8 +29,6 @@ def printAllColsWithJoin(tabs,tables,tableDataR,col):
 	headerList.reverse()		
 	print ' '.join(headerList)
 
-	# for r1,r2 in itertools.zip_longest(tableDataR[tabs[0]],tableDataR[tabs[1]],fillvalue=' '):
-	# 	if r1[]
 	for r1 in tableDataR[tabs[0]]:
 		for r2 in tableDataR[tabs[1]]:
 			if r1[pos1]==r2[pos2]:
@@ -39,6 +37,27 @@ def printAllColsWithJoin(tabs,tables,tableDataR,col):
 				break
 	for i in data:
 		print ' '.join(i)			
+
+def printAllColsWithJoin(tabs,colsJoin,tables,tableDataR):
+	""" tabs- list of tables, colsJoin- list of joining columns"""
+	data=[]
+	headerList=[]
+	pos1 = tables[tabs[0]].index(colsJoin[0])	# positions of cols in both tables
+	pos2 = tables[tabs[1]].index(colsJoin[1])
+	for t in tabs:						# print headers 
+		for c in tables[t]:
+			headerList.append(c)
+	headerList.remove(colsJoin[1])			# print headers with joining col printed only once	
+	print ' '.join(headerList)
+
+	for r1 in tableDataR[tabs[0]]:
+		for r2 in tableDataR[tabs[1]]:
+			if r1[pos1]==r2[pos2]:
+				del r2[pos2]
+				data.append(list(chain(r1,r2)))
+				break
+	for i in data:
+		print ' '.join(i)
 
 def printCrossProduct(tabs,tableDataR):
 	""" cross product of two tables in tabs"""
@@ -111,6 +130,7 @@ def checkErrors(cols,tabs,tables):
 	colList=cols.split(',')
 	tabList=tabs.split(',')
 	check=True
+	colCheck=0
 	for t in tabList:
 		try:
 			val = tables[t]
@@ -125,8 +145,10 @@ def checkErrors(cols,tabs,tables):
 		if check:		
 			for c in colList:
 				if c not in tables[t]:
-					print "Column "+c+" not Found!!"
-					sys.exit(0)
+					colCheck+=1				
+	if colCheck ==len(tabList)*len(colList):
+		print "Column "+c+" not Found!!"
+		sys.exit(0)
 
 def convertRowsToCols(tableTemp):
 	lst = []
@@ -223,9 +245,15 @@ if isinstance(tokens[2],sqlparse.sql.Function):			# aggregate functions
 elif '*' in cols:										# select *
 	if where:											# JOIN condition present
 		tabs=[]
+		colsJoin=[]
 		for i in whereList:
 			tabs.append(i[0].replace(' ',''))
-		printAllColsWithJoin(tabs,tables,tableDataR,whereList[0][1])
+			colsJoin.append(i[1].replace(' ',''))
+		if whereList[0][1]==whereList[1][1]:			# JOIN with common column
+			printAllColsWithJoinCommon(tabs,tables,tableDataR,whereList[0][1])
+		else:
+			printAllColsWithJoin(tabs,colsJoin,tables,tableDataR)
+
 	else:
 		if len(tabs.split(','))>1:
 			printCrossProduct(tabs,tableDataR)
